@@ -1,0 +1,65 @@
+# ============================================================
+# Student Management System — .gitignore
+# ============================================================
+
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# Flask / instance
+instance/
+.webassets-cache
+
+# Uploaded files
+app/static/images/uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node (if any tooling is added)
+node_modules/
+
+# Deployment
+*.pid
+gunicorn.conf.py
+nginx.conf

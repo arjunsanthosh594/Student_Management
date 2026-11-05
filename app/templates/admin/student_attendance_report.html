@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Individual Report: {{ student.full_name }} — EduManage SMS{% endblock %}
+{% block page_title %}Student Attendance Audit{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<a href="{{ url_for('admin.students') }}">Students</a>
+<span class="sep">/</span>
+<a href="{{ url_for('admin.view_student', sid=student.id) }}">{{ student.full_name }}</a>
+<span class="sep">/</span>
+<span class="current">Attendance Audit</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link active">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Attendance Report: {{ student.full_name }}</h1>
+    <div class="ph-sub"><i class="bi bi-mortarboard me-1 text-primary"></i>ID: <strong>{{ student.student_id }}</strong> &bull; Degree: {{ student.course.course_name }}</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('admin.view_student', sid=student.id) }}" class="btn btn-outline-secondary btn-sm bg-white">
+      <i class="bi bi-arrow-left me-1"></i>Back to Student Profile
+    </a>
+  </div>
+</div>
+
+<!-- Stat Matrix -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-blue"><i class="bi bi-calendar3"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Total Days</div>
+        <div class="stat-value">{{ student.total_attendance }}</div>
+        <div class="stat-sub text-muted">Sessions scheduled</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-green"><i class="bi bi-check2-circle"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Present</div>
+        <div class="stat-value text-success">{{ student.present_days }}</div>
+        <div class="stat-sub text-muted">Attended sessions</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-red"><i class="bi bi-x-circle"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Absent</div>
+        <div class="stat-value text-danger">{{ student.absent_days }}</div>
+        <div class="stat-sub text-muted">Missed sessions</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-orange"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Attendance Rate</div>
+        <div class="stat-value">{{ student.attendance_percentage }}%</div>
+        <div class="stat-sub text-muted">
+          {% if student.attendance_percentage >= 75 %}
+            <span class="text-success fw-bold">Eligible for examinations</span>
+          {% else %}
+            <span class="text-danger fw-bold">Attendance shortage alert</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Log Table -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-calendar2-check text-primary"></i>
+      Complete Daily Attendance Ledger
+    </h5>
+    <span class="badge-pill bp-blue">{{ records|length }} Entries</span>
+  </div>
+  <div class="card-body-tight">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th>Date</th>
+            <th>Day of Week</th>
+            <th>Recorded Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="text-muted text-xs">{{ loop.index }}</td>
+            <td class="fw-semibold text-dark">{{ r.attendance_date.strftime('%d %B %Y') }}</td>
+            <td class="text-muted text-xs">{{ r.attendance_date.strftime('%A') }}</td>
+            <td>
+              {% if r.status == 'Present' %}
+                <span class="badge-pill bp-present"><i class="bi bi-check-circle-fill"></i> Present</span>
+              {% else %}
+                <span class="badge-pill bp-absent"><i class="bi bi-x-circle-fill"></i> Absent</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4">
+              <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>No attendance entries found for this student.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

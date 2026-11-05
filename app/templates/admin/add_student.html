@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Enroll New Student — EduManage SMS{% endblock %}
+{% block page_title %}Student Registration{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<a href="{{ url_for('admin.students') }}">Students</a>
+<span class="sep">/</span>
+<span class="current">Enrollment</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link active">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Enroll New Student</h1>
+    <div class="ph-sub"><i class="bi bi-person-plus me-1 text-primary"></i>Register academic dossier, assign credentials, and set faculty</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary btn-sm bg-white">
+      <i class="bi bi-arrow-left me-1"></i>Return to Directory
+    </a>
+  </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data" novalidate id="addStudentForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+  <div class="row g-3">
+    <!-- Left Column: Personal & Academic & Credentials -->
+    <div class="col-lg-8">
+      <!-- Personal Details Card -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header">
+          <h5 class="card-header-title">
+            <i class="bi bi-person-vcard text-primary"></i>
+            1. Personal Demographics
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Legal Name <span class="req">*</span></label>
+              <input type="text" class="form-control" name="full_name" placeholder="e.g. Eleanor Vance" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email Address <span class="req">*</span></label>
+              <input type="email" class="form-control" name="email" placeholder="eleanor.vance@sms.edu" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" name="phone" placeholder="+1 (555) 019-2834" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Gender Selection <span class="req">*</span></label>
+              <select class="form-select" name="gender" required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" name="date_of_birth" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Admission Date <span class="req">*</span></label>
+              <input type="date" class="form-control" name="admission_date" id="admission_date" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Residential Address</label>
+              <textarea class="form-control" name="address" rows="2" placeholder="Street, City, Postal Code..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Academic Allocation Card -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header">
+          <h5 class="card-header-title">
+            <i class="bi bi-mortarboard text-primary"></i>
+            2. Academic Department & Course
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Department Faculty <span class="req">*</span></label>
+              <select class="form-select" name="department_id" required>
+                <option value="">Select Department</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}">{{ d.dept_name }} ({{ d.dept_code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Degree Course Program <span class="req">*</span></label>
+              <select class="form-select" name="course_id" required>
+                <option value="">Select Degree Course</option>
+                {% for c in courses %}
+                <option value="{{ c.id }}">{{ c.course_name }} ({{ c.course_code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Initial Login Account Setup Card -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header">
+          <h5 class="card-header-title">
+            <i class="bi bi-key-fill text-primary"></i>
+            3. Student Portal Access Account
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info py-2 d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-shield-check text-primary fs-5"></i>
+            <div class="text-xs">
+              A student login account will be automatically provisioned. The username is the system-generated <strong>Student ID</strong> (e.g. <code>SMS-2026...</code>).
+            </div>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Initial Password <span class="req">*</span></label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="student_password" name="password"
+                     placeholder="Minimum 6 characters" required value="Student@123" />
+              <button class="btn btn-outline-secondary password-toggle" type="button" data-target="#student_password">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <div class="form-text">Default suggested: <code>Student@123</code>. The student can modify this in their portal.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Profile Picture & Save Actions -->
+    <div class="col-lg-4">
+      <!-- Profile Picture Card -->
+      <div class="card mb-3 shadow-sm text-center">
+        <div class="card-header">
+          <h5 class="card-header-title">
+            <i class="bi bi-image-fill text-primary"></i>
+            Student Photograph
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <img id="profile-preview" src="" alt="Photo Preview"
+                 class="rounded-circle mx-auto d-none shadow-sm"
+                 style="width: 110px; height: 110px; object-fit: cover; border: 3px solid var(--primary);" />
+            <div id="preview-placeholder" class="hero-avatar-ph mx-auto" style="width: 100px; height: 100px; font-size: 2.2rem; background: var(--primary-light); color: var(--primary); border: 2px dashed var(--border-color);">
+              <i class="bi bi-person"></i>
+            </div>
+          </div>
+          <label class="form-label text-xs fw-bold text-muted text-uppercase">Upload Photo (Local or AWS S3)</label>
+          <input type="file" class="form-control form-control-sm" id="profile_picture" name="profile_picture"
+                 accept="image/png,image/jpeg,image/jpg,image/webp" />
+          <div class="text-2xs text-muted mt-2">
+            Max 5 MB. PNG, JPG, or WEBP. Uploaded automatically to S3 bucket when AWS is configured.
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Submission Box -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <button type="submit" class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 mb-2 shadow-sm">
+            <i class="bi bi-check-circle-fill"></i>
+            <span class="fw-bold">Complete Enrollment</span>
+          </button>
+          <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary w-100 btn-sm">
+            Cancel
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const adm = document.getElementById('admission_date');
+    if (adm && !adm.value) {
+      adm.value = new Date().toISOString().split('T')[0];
+    }
+    const profInput = document.getElementById('profile_picture');
+    const profImg   = document.getElementById('profile-preview');
+    const profPh    = document.getElementById('preview-placeholder');
+    profInput?.addEventListener('change', () => {
+      if (profInput.files && profInput.files[0]) {
+        profImg.classList.remove('d-none');
+        profPh.classList.add('d-none');
+      }
+    });
+  });
+</script>
+{% endblock %}

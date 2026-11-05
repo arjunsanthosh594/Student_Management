@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Add Academic Department — EduManage SMS{% endblock %}
+{% block page_title %}Add Department{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<a href="{{ url_for('admin.departments') }}">Departments</a>
+<span class="sep">/</span>
+<span class="current">Add Department</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link active">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Create Academic Department</h1>
+    <div class="ph-sub"><i class="bi bi-building-add me-1 text-primary"></i>Register a faculty branch with unique code</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('admin.departments') }}" class="btn btn-outline-secondary btn-sm bg-white">
+      <i class="bi bi-arrow-left me-1"></i>Back to Departments
+    </a>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-building text-primary"></i>
+          Department Specifications
+        </h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" novalidate id="addDeptForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="mb-3">
+            <label class="form-label">Department Name <span class="req">*</span></label>
+            <input type="text" class="form-control" name="dept_name" placeholder="e.g. Computer Science and Engineering" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Department Code <span class="req">*</span></label>
+            <input type="text" class="form-control" name="dept_code" placeholder="e.g. CSE" required />
+            <div class="form-text">Must be unique (will be automatically capitalized).</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Department Description</label>
+            <textarea class="form-control" name="description" rows="3" placeholder="Overview of faculty, specializations, facilities..."></textarea>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4 py-2 d-flex align-items-center gap-2 shadow-sm">
+              <i class="bi bi-check2-circle"></i>
+              <span class="fw-bold">Create Department</span>
+            </button>
+            <a href="{{ url_for('admin.departments') }}" class="btn btn-outline-secondary px-3 py-2">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

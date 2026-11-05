@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}System Attendance Logs — EduManage SMS{% endblock %}
+{% block page_title %}Attendance Logs{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<a href="{{ url_for('attendance.index') }}">Attendance</a>
+<span class="sep">/</span>
+<span class="current">History Logs</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link active">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Historical Attendance Logs</h1>
+    <div class="ph-sub"><i class="bi bi-database-check me-1 text-primary"></i>Audit and filter historical attendance entries across all sessions</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('attendance.index') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-calendar-check-fill"></i>
+      <span>Record Today's Attendance</span>
+    </a>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="filter-bar mb-3">
+  <form method="GET" class="row g-2 align-items-end">
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label text-xs">Date Filter</label>
+      <input type="date" class="form-control form-control-sm" name="att_date" value="{{ att_date_str }}" />
+    </div>
+    <div class="col-sm-6 col-lg-4">
+      <label class="form-label text-xs">Course Filter</label>
+      <select class="form-select form-select-sm" name="course_id">
+        <option value="">All Programs / Courses</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if course_id == c.id %}selected{% endif %}>{{ c.course_name }} ({{ c.course_code }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label text-xs">Student Keyword</label>
+      <input type="text" class="form-control form-control-sm" name="student" value="{{ student_search }}" placeholder="Student Name or ID..." />
+    </div>
+    <div class="col-sm-6 col-lg-2 d-flex gap-1">
+      <button type="submit" class="btn btn-primary btn-sm w-100" title="Apply Filters">
+        <i class="bi bi-funnel-fill me-1"></i>Filter
+      </button>
+      <a href="{{ url_for('attendance.history') }}" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Attendance Records Table Card -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-clock-history text-primary"></i>
+      Audit Trail
+    </h5>
+    <span class="badge-pill bp-blue">{{ pagination.total }} Record{{ 's' if pagination.total != 1 else '' }} Found</span>
+  </div>
+  <div class="card-body-tight">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th>Student Profile</th>
+            <th>Permanent ID</th>
+            <th>Enrolled Degree</th>
+            <th>Attendance Date</th>
+            <th>Day</th>
+            <th>Recorded Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="text-muted text-xs">{{ loop.index + (pagination.page - 1) * pagination.per_page }}</td>
+            <td>
+              <div class="s-cell">
+                <div class="s-avatar {% if not r.student.profile_picture %}placeholder{% endif %}">
+                  {% if r.student.profile_picture %}
+                    <img src="{{ url_for('static', filename=r.student.profile_picture) }}" alt="{{ r.student.full_name }}" onerror="this.onerror=null; this.parentElement.innerText='{{ r.student.full_name[0] }}';">
+                  {% else %}
+                    {{ r.student.full_name[0] }}
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="s-name">{{ r.student.full_name }}</div>
+                  <div class="s-email">{{ r.student.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="id-code">{{ r.student.student_id }}</span></td>
+            <td><span class="text-dark fw-semibold">{{ r.student.course.course_name }}</span></td>
+            <td class="fw-semibold">{{ r.attendance_date.strftime('%d %B %Y') }}</td>
+            <td class="text-muted text-xs">{{ r.attendance_date.strftime('%A') }}</td>
+            <td>
+              {% if r.status == 'Present' %}
+                <span class="badge-pill bp-present"><i class="bi bi-check-circle-fill"></i> Present</span>
+              {% else %}
+                <span class="badge-pill bp-absent"><i class="bi bi-x-circle-fill"></i> Absent</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>No historical attendance records matched the query parameters.</p>
+                <a href="{{ url_for('attendance.history') }}" class="btn btn-sm btn-outline-primary mt-2">Reset Filters</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  {% if pagination.pages > 1 %}
+  <div class="card-footer-bar">
+    <div class="text-xs text-muted">
+      Page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} entries)
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('attendance.history', page=pagination.prev_num, att_date=att_date_str, course_id=course_id, student=student_search) }}">
+            <i class="bi bi-chevron-left me-1"></i>Prev
+          </a>
+        </li>
+        {% endif %}
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('attendance.history', page=p, att_date=att_date_str, course_id=course_id, student=student_search) }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('attendance.history', page=pagination.next_num, att_date=att_date_str, course_id=course_id, student=student_search) }}">
+            Next<i class="bi bi-chevron-right ms-1"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

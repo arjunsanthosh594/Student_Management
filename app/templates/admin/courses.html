@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Degree Courses & Programs — EduManage SMS{% endblock %}
+{% block page_title %}Course Catalog{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<span class="current">Courses</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link active">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Degree Programs & Courses</h1>
+    <div class="ph-sub"><i class="bi bi-journal-bookmark me-1 text-primary"></i>Manage curriculum offerings, durations, departments, and enrollments</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('courses.add_course') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-plus-circle-fill"></i>
+      <span>Add New Course</span>
+    </a>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="filter-bar mb-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-sm-8 col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search by course title or code..." />
+      </div>
+    </div>
+    <div class="col-sm-4 col-md-3 d-flex gap-1">
+      <button type="submit" class="btn btn-primary btn-sm px-3">Search</button>
+      {% if search %}
+        <a href="{{ url_for('courses.courses') }}" class="btn btn-outline-secondary btn-sm" title="Clear Search">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Course List Table Card -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-book-fill text-primary"></i>
+      Active Academic Programs
+    </h5>
+    <span class="badge-pill bp-blue">{{ courses|length }} Course{{ 's' if courses|length != 1 else '' }}</span>
+  </div>
+  <div class="card-body-tight">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 45px;">#</th>
+            <th>Course Name</th>
+            <th>Course Code</th>
+            <th>Department</th>
+            <th>Duration</th>
+            <th>Enrolled Students</th>
+            <th class="text-end" style="width: 100px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in courses %}
+          <tr>
+            <td class="text-muted text-xs">{{ loop.index }}</td>
+            <td>
+              <div class="fw-bold text-dark">{{ c.course_name }}</div>
+              <div class="text-xs text-muted">{{ c.description or 'No syllabus description provided' }}</div>
+            </td>
+            <td><span class="id-code">{{ c.course_code }}</span></td>
+            <td><span class="badge-pill bp-gray">{{ c.department.dept_name }}</span></td>
+            <td><span class="text-muted text-xs">{{ c.duration or '—' }}</span></td>
+            <td>
+              <span class="badge-pill bp-blue">{{ c.student_count }} Student{{ 's' if c.student_count != 1 else '' }}</span>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('courses.edit_course', cid=c.id) }}" class="action-btn ab-edit" title="Edit Course Details">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="POST" action="{{ url_for('courses.delete_course', cid=c.id) }}" class="confirm-delete d-inline" data-name="{{ c.course_name }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="action-btn ab-delete" title="Delete Course" {% if c.student_count > 0 %}disabled title="Cannot delete: Enrolled students exist"{% endif %}>
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="bi bi-book"></i>
+                <p>No courses found in catalog.</p>
+                <a href="{{ url_for('courses.add_course') }}" class="btn btn-sm btn-outline-primary mt-2">Add First Course</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance History — EduManage SMS{% endblock %}
+{% block page_title %}My Attendance Records{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('student.dashboard') }}"><i class="bi bi-mortarboard me-1"></i>Student Portal</a>
+<span class="sep">/</span>
+<span class="current">My Attendance</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Student Self-Service</div>
+<a href="{{ url_for('student.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('student.profile') }}" class="nav-link">
+  <i class="bi bi-person-circle nav-icon"></i>
+  <span>My Profile</span>
+</a>
+<a href="{{ url_for('student.attendance') }}" class="nav-link active">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>My Attendance</span>
+</a>
+<a href="{{ url_for('student.change_password') }}" class="nav-link">
+  <i class="bi bi-key nav-icon"></i>
+  <span>Security & Password</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Academic Attendance Tracker</h1>
+    <div class="ph-sub"><i class="bi bi-person-check me-1 text-primary"></i>Personal log of classes attended and recorded absences</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Stat Summary Matrix -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-blue"><i class="bi bi-calendar3"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Total Days Conducted</div>
+        <div class="stat-value">{{ student.total_attendance }}</div>
+        <div class="stat-sub text-muted">Sessions held</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-green"><i class="bi bi-check2-circle"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Days Present</div>
+        <div class="stat-value text-success">{{ student.present_days }}</div>
+        <div class="stat-sub text-muted">Attended sessions</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-red"><i class="bi bi-x-circle"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Days Absent</div>
+        <div class="stat-value text-danger">{{ student.absent_days }}</div>
+        <div class="stat-sub text-muted">Missed sessions</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-orange"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Attendance Percentage</div>
+        <div class="stat-value">{{ student.attendance_percentage }}%</div>
+        <div class="stat-sub text-muted">
+          {% if student.attendance_percentage >= 75 %}
+            <span class="text-success fw-bold"><i class="bi bi-check-circle me-1"></i>Exam Eligible</span>
+          {% else %}
+            <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>Shortage Risk (&lt;75%)</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Monthly Breakdown Card -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-calendar-month text-primary"></i>
+          Monthly Summary
+        </h5>
+        <span class="badge-pill bp-blue">{{ monthly|length }} Months</span>
+      </div>
+      <div class="card-body-tight">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="text-center">Present</th>
+                <th class="text-center">Absent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for month, counts in monthly.items() %}
+              <tr>
+                <td class="fw-semibold text-dark">{{ month }}</td>
+                <td class="text-center"><span class="badge-pill bp-present">{{ counts.present }}</span></td>
+                <td class="text-center"><span class="badge-pill bp-absent">{{ counts.absent }}</span></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="text-center text-muted py-3 text-xs">No monthly history compiled yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Daily Attendance Table -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-clock-history text-primary"></i>
+          Daily Attendance Ledger
+        </h5>
+        <span class="badge-pill bp-gray">{{ records|length }} Records</span>
+      </div>
+      <div class="card-body-tight">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records %}
+              <tr>
+                <td class="text-muted text-xs">{{ loop.index }}</td>
+                <td class="fw-semibold text-dark">{{ r.attendance_date.strftime('%d %B %Y') }}</td>
+                <td class="text-muted text-xs">{{ r.attendance_date.strftime('%A') }}</td>
+                <td>
+                  {% if r.status == 'Present' %}
+                    <span class="badge-pill bp-present"><i class="bi bi-check-circle-fill"></i> Present</span>
+                  {% else %}
+                    <span class="badge-pill bp-absent"><i class="bi bi-x-circle-fill"></i> Absent</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4">
+                  <div class="empty-state">
+                    <i class="bi bi-calendar-x"></i>
+                    <p>No daily attendance logs found for your enrollment.</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard — EduManage SMS{% endblock %}
+{% block page_title %}Student Portal{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('student.dashboard') }}"><i class="bi bi-mortarboard me-1"></i>Student Portal</a>
+<span class="sep">/</span>
+<span class="current">Dashboard</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Student Self-Service</div>
+<a href="{{ url_for('student.dashboard') }}" class="nav-link active">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('student.profile') }}" class="nav-link">
+  <i class="bi bi-person-circle nav-icon"></i>
+  <span>My Profile</span>
+</a>
+<a href="{{ url_for('student.attendance') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>My Attendance</span>
+</a>
+<a href="{{ url_for('student.change_password') }}" class="nav-link">
+  <i class="bi bi-key nav-icon"></i>
+  <span>Security & Password</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <div class="wb-avatar">
+    {% if profile_url %}
+      <img src="{{ profile_url }}" alt="{{ student.full_name }}" onerror="this.onerror=null; this.parentElement.innerText='{{ student.full_name[0] }}';">
+    {% else %}
+      {{ student.full_name[0] }}
+    {% endif %}
+  </div>
+  <div class="wb-text">
+    <div class="greeting">Welcome back to your portal,</div>
+    <div class="name">{{ student.full_name }}</div>
+    <div class="sub">
+      <span><i class="bi bi-person-badge me-1"></i>ID: <strong>{{ student.student_id }}</strong></span>
+      <span class="mx-2">&bull;</span>
+      <span><i class="bi bi-book me-1"></i>{{ student.course.course_name }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Stat Cards Matrix -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-blue"><i class="bi bi-calendar3"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Total Working Days</div>
+        <div class="stat-value">{{ student.total_attendance }}</div>
+        <div class="stat-sub text-muted">Academic days recorded</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-green"><i class="bi bi-check2-circle"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Classes Attended</div>
+        <div class="stat-value text-success">{{ student.present_days }}</div>
+        <div class="stat-sub text-muted">Marked as Present</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-red"><i class="bi bi-x-circle"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Classes Missed</div>
+        <div class="stat-value text-danger">{{ student.absent_days }}</div>
+        <div class="stat-sub text-muted">Recorded absences</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon si-orange"><i class="bi bi-pie-chart-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Attendance Rate</div>
+        <div class="stat-value">{{ student.attendance_percentage }}%</div>
+        <div class="stat-sub text-muted">
+          {% if student.attendance_percentage >= 75 %}
+            <span class="text-success"><i class="bi bi-check-circle me-1"></i>Eligible for exams</span>
+          {% else %}
+            <span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Below 75% threshold</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Cards Split -->
+<div class="row g-3">
+  <!-- Academic Profile Card -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-mortarboard-fill text-primary"></i>
+          Academic Enrollment Profile
+        </h5>
+        <span class="badge-pill bp-blue">{{ student.department.dept_code }}</span>
+      </div>
+      <div class="card-body">
+        <div class="info-list">
+          <div class="info-row">
+            <div class="info-key">Student ID</div>
+            <div class="info-val"><span class="id-code">{{ student.student_id }}</span></div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Enrolled Course</div>
+            <div class="info-val fw-semibold text-dark">{{ student.course.course_name }} ({{ student.course.course_code }})</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Faculty / Dept</div>
+            <div class="info-val">{{ student.department.dept_name }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Registered Email</div>
+            <div class="info-val">{{ student.email }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Contact Phone</div>
+            <div class="info-val">{{ student.phone or 'Not provided' }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Admission Date</div>
+            <div class="info-val">{{ student.admission_date.strftime('%d %B %Y') }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer-bar">
+        <span class="text-xs text-muted"><i class="bi bi-shield-check me-1"></i>Read-only records verified by Admin</span>
+        <a href="{{ url_for('student.profile') }}" class="btn btn-sm btn-outline-primary">
+          <span>Full Profile</span>
+          <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Analytics Card -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-graph-up-arrow text-primary"></i>
+          Attendance Progress
+        </h5>
+        <span class="badge-pill {% if student.attendance_percentage >= 75 %}bp-green{% else %}bp-absent{% endif %}">
+          {{ student.attendance_percentage }}%
+        </span>
+      </div>
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-xs fw-bold text-muted text-uppercase">Cumulative Attendance</span>
+            <span class="text-xs fw-bold">{{ student.attendance_percentage }}%</span>
+          </div>
+          <div class="att-bar">
+            <div class="att-bar-fill {% if student.attendance_percentage >= 75 %}good{% elif student.attendance_percentage >= 60 %}warning{% else %}danger{% endif %}" style="width: {{ student.attendance_percentage }}%;"></div>
+          </div>
+          <div class="d-flex justify-content-between text-2xs text-muted mt-1">
+            <span>0%</span>
+            <span>Target: 75%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <div class="my-3 d-flex justify-content-center">
+          {% if student.total_attendance > 0 %}
+            <div class="chart-container" style="position: relative; width: 170px; height: 170px;">
+              <canvas id="attendance-chart"
+                data-present="{{ student.present_days }}"
+                data-absent="{{ student.absent_days }}"
+              ></canvas>
+            </div>
+          {% else %}
+            <div class="empty-state py-3">
+              <i class="bi bi-calendar-x"></i>
+              <p>No attendance records logged yet.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-around p-2 bg-light rounded text-center">
+          <div>
+            <div class="text-success fw-bold">{{ student.present_days }}</div>
+            <div class="text-2xs text-muted text-uppercase">Present Days</div>
+          </div>
+          <div class="border-start"></div>
+          <div>
+            <div class="text-danger fw-bold">{{ student.absent_days }}</div>
+            <div class="text-2xs text-muted text-uppercase">Absent Days</div>
+          </div>
+          <div class="border-start"></div>
+          <div>
+            <div class="text-dark fw-bold">{{ student.total_attendance }}</div>
+            <div class="text-2xs text-muted text-uppercase">Total Days</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer-bar">
+        <span class="text-xs text-muted">Updated daily by faculty</span>
+        <a href="{{ url_for('student.attendance') }}" class="btn btn-sm btn-outline-primary">
+          <span>View Daily Log</span>
+          <i class="bi bi-calendar2-check ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Student Management Directory — EduManage SMS{% endblock %}
+{% block page_title %}Student Directory{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<span class="current">Students</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link active">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Student Directory & Records</h1>
+    <div class="ph-sub"><i class="bi bi-database me-1 text-primary"></i>Complete student enrollment profiles, academic filters, and management</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('admin.add_student') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-person-plus-fill"></i>
+      <span>Enroll New Student</span>
+    </a>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="filter-bar">
+  <form method="GET" action="{{ url_for('admin.students') }}" class="row g-2 align-items-end">
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label text-xs">Search Keywords</label>
+      <div class="input-group input-group-sm">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Name, ID or email..." />
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label text-xs">Department Filter</label>
+      <select class="form-select form-select-sm" name="department">
+        <option value="">All Academic Departments</option>
+        {% for d in departments %}
+        <option value="{{ d.id }}" {% if dept_filter == d.id|string %}selected{% endif %}>{{ d.dept_name }} ({{ d.dept_code }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <label class="form-label text-xs">Course Filter</label>
+      <select class="form-select form-select-sm" name="course">
+        <option value="">All Programs / Courses</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if course_filter == c.id|string %}selected{% endif %}>{{ c.course_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg-3 d-flex gap-2">
+      <div class="flex-grow-1">
+        <label class="form-label text-xs">Gender</label>
+        <select class="form-select form-select-sm" name="gender">
+          <option value="">All Genders</option>
+          <option value="Male"   {% if gender_filter == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if gender_filter == 'Female' %}selected{% endif %}>Female</option>
+          <option value="Other"  {% if gender_filter == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label text-xs d-invisible">&nbsp;</label>
+        <div class="d-flex gap-1">
+          <button type="submit" class="btn btn-primary btn-sm px-3" title="Apply Filters">
+            <i class="bi bi-funnel-fill"></i>
+          </button>
+          <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+            <i class="bi bi-x-lg"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Students Directory Table Card -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-people-fill text-primary"></i>
+      Enrolled Students
+    </h5>
+    <span class="badge-pill bp-blue">{{ pagination.total }} Student{{ 's' if pagination.total != 1 else '' }} Found</span>
+  </div>
+  <div class="card-body-tight">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 45px;">#</th>
+            <th>Student Profile</th>
+            <th>Permanent ID</th>
+            <th>Enrolled Degree</th>
+            <th>Department</th>
+            <th>Gender</th>
+            <th>Attendance %</th>
+            <th class="text-end" style="width: 140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td class="text-muted text-xs">{{ loop.index + (pagination.page - 1) * pagination.per_page }}</td>
+            <td>
+              <div class="s-cell">
+                <div class="s-avatar {% if not s.profile_picture %}placeholder{% endif %}">
+                  {% if s.profile_picture %}
+                    <img src="{{ url_for('static', filename=s.profile_picture) }}" alt="{{ s.full_name }}" onerror="this.onerror=null; this.parentElement.innerText='{{ s.full_name[0] }}';">
+                  {% else %}
+                    {{ s.full_name[0] }}
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="s-name">{{ s.full_name }}</div>
+                  <div class="s-email">{{ s.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="id-code">{{ s.student_id }}</span>
+            </td>
+            <td>
+              <span class="text-dark fw-semibold">{{ s.course.course_name }}</span>
+            </td>
+            <td>
+              <span class="badge-pill bp-gray">{{ s.department.dept_name }}</span>
+            </td>
+            <td>
+              <span class="badge-pill {% if s.gender == 'Male' %}bp-male{% elif s.gender == 'Female' %}bp-female{% else %}bp-gray{% endif %}">
+                {{ s.gender }}
+              </span>
+            </td>
+            <td>
+              <div style="min-width: 90px;">
+                <div class="d-flex justify-content-between text-xs mb-1">
+                  <span class="fw-bold">{{ s.attendance_percentage }}%</span>
+                  <span class="text-2xs text-muted">({{ s.present_days }}/{{ s.total_attendance }})</span>
+                </div>
+                <div class="att-bar">
+                  <div class="att-bar-fill {% if s.attendance_percentage >= 75 %}good{% elif s.attendance_percentage >= 60 %}warning{% else %}danger{% endif %}" style="width: {{ s.attendance_percentage }}%;"></div>
+                </div>
+              </div>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('admin.view_student', sid=s.id) }}" class="action-btn ab-view" title="View Dossier">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('admin.edit_student', sid=s.id) }}" class="action-btn ab-edit" title="Edit Student">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{{ url_for('attendance.student_report', sid=s.id) }}" class="action-btn ab-report" title="Attendance History">
+                  <i class="bi bi-calendar2-check"></i>
+                </a>
+                <form method="POST" action="{{ url_for('admin.delete_student', sid=s.id) }}" class="confirm-delete d-inline" data-name="{{ s.full_name }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="action-btn ab-delete" title="Delete Student Record">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="bi bi-search"></i>
+                <p>No student records matched the specified filter criteria.</p>
+                <a href="{{ url_for('admin.students') }}" class="btn btn-sm btn-outline-primary mt-2">Clear Search Filters</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  {% if pagination.pages > 1 %}
+  <div class="card-footer-bar">
+    <div class="text-xs text-muted">
+      Showing page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} records total)
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('admin.students', page=pagination.prev_num, search=search, department=dept_filter, course=course_filter, gender=gender_filter) }}">
+            <i class="bi bi-chevron-left me-1"></i>Prev
+          </a>
+        </li>
+        {% endif %}
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.students', page=p, search=search, department=dept_filter, course=course_filter, gender=gender_filter) }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('admin.students', page=pagination.next_num, search=search, department=dept_filter, course=course_filter, gender=gender_filter) }}">
+            Next<i class="bi bi-chevron-right ms-1"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

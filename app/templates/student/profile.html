@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}My Student Profile — EduManage SMS{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('student.dashboard') }}"><i class="bi bi-mortarboard me-1"></i>Student Portal</a>
+<span class="sep">/</span>
+<span class="current">My Profile</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Student Self-Service</div>
+<a href="{{ url_for('student.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('student.profile') }}" class="nav-link active">
+  <i class="bi bi-person-circle nav-icon"></i>
+  <span>My Profile</span>
+</a>
+<a href="{{ url_for('student.attendance') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>My Attendance</span>
+</a>
+<a href="{{ url_for('student.change_password') }}" class="nav-link">
+  <i class="bi bi-key nav-icon"></i>
+  <span>Security & Password</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Personal Student Record</h1>
+    <div class="ph-sub"><i class="bi bi-shield-check me-1 text-success"></i>Official academic and biometric enrollment information</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Profile Hero Column -->
+  <div class="col-lg-4">
+    <div class="profile-hero mb-3">
+      {% if profile_url %}
+        <img src="{{ profile_url }}" alt="{{ student.full_name }}" class="hero-avatar" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'hero-avatar-ph\'>{{ student.full_name[0] }}</div>';" />
+      {% else %}
+        <div class="hero-avatar-ph">{{ student.full_name[0] }}</div>
+      {% endif %}
+      <div class="hero-name">{{ student.full_name }}</div>
+      <div class="hero-id"><span class="badge bg-light text-primary px-2 py-1"><i class="bi bi-person-badge me-1"></i>{{ student.student_id }}</span></div>
+      <div class="hero-sub mt-2">{{ student.course.course_name }}</div>
+    </div>
+
+    <!-- Attendance Summary Widget -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-clipboard2-check text-primary"></i>
+          Attendance Standing
+        </h5>
+        <span class="badge-pill {% if student.attendance_percentage >= 75 %}bp-green{% else %}bp-absent{% endif %}">
+          {{ student.attendance_percentage }}%
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-1 text-xs">
+          <span class="text-muted">Attendance Rate</span>
+          <span class="fw-bold">{{ student.attendance_percentage }}%</span>
+        </div>
+        <div class="att-bar mb-3">
+          <div class="att-bar-fill {% if student.attendance_percentage >= 75 %}good{% elif student.attendance_percentage >= 60 %}warning{% else %}danger{% endif %}" style="width: {{ student.attendance_percentage }}%;"></div>
+        </div>
+        <div class="d-flex justify-content-between text-xs text-muted">
+          <span>Present: <strong class="text-success">{{ student.present_days }}</strong></span>
+          <span>Absent: <strong class="text-danger">{{ student.absent_days }}</strong></span>
+          <span>Total: <strong>{{ student.total_attendance }}</strong></span>
+        </div>
+        <div class="mt-3 text-center">
+          <a href="{{ url_for('student.attendance') }}" class="btn btn-sm btn-outline-primary w-100">
+            <i class="bi bi-calendar2-month me-1"></i>Detailed Log
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Academic & Bio Info -->
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-person-lines-fill text-primary"></i>
+          Official Student Dossier
+        </h5>
+        <span class="badge-pill bp-gray">Verified</span>
+      </div>
+      <div class="card-body">
+        <div class="info-list">
+          <div class="info-row">
+            <div class="info-key">Full Legal Name</div>
+            <div class="info-val fw-bold text-dark">{{ student.full_name }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Permanent Student ID</div>
+            <div class="info-val"><span class="id-code">{{ student.student_id }}</span></div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Degree Program</div>
+            <div class="info-val fw-semibold text-primary">{{ student.course.course_name }} ({{ student.course.course_code }})</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Academic Department</div>
+            <div class="info-val">{{ student.department.dept_name }} ({{ student.department.dept_code }})</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Official Email</div>
+            <div class="info-val">{{ student.email }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Phone Number</div>
+            <div class="info-val">{{ student.phone or 'Not provided' }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Gender</div>
+            <div class="info-val">
+              <span class="badge-pill {% if student.gender == 'Male' %}bp-male{% elif student.gender == 'Female' %}bp-female{% else %}bp-gray{% endif %}">
+                {{ student.gender }}
+              </span>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Date of Birth</div>
+            <div class="info-val">{{ student.date_of_birth.strftime('%d %B %Y') if student.date_of_birth else 'Not recorded' }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Date of Admission</div>
+            <div class="info-val">{{ student.admission_date.strftime('%d %B %Y') }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-key">Residential Address</div>
+            <div class="info-val">{{ student.address or 'No address registered' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-info py-2 d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle-fill fs-5 text-primary"></i>
+      <div class="text-xs">
+        <strong>Academic Record Protection:</strong> Students cannot directly alter their official academic credentials (Student ID, Degree, Department, Admission Date). To submit update requests, please consult the Academic Registrar.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

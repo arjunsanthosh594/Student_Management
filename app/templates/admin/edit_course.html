@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ course.course_name }} — EduManage SMS{% endblock %}
+{% block page_title %}Edit Course{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<a href="{{ url_for('courses.courses') }}">Courses</a>
+<span class="sep">/</span>
+<span class="current">Edit {{ course.course_code }}</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link active">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Edit Course: {{ course.course_name }}</h1>
+    <div class="ph-sub"><i class="bi bi-book me-1 text-primary"></i>Course Code: <strong>{{ course.course_code }}</strong> &bull; {{ course.student_count }} Student(s) Enrolled</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('courses.courses') }}" class="btn btn-outline-secondary btn-sm bg-white">
+      <i class="bi bi-arrow-left me-1"></i>Back to Courses
+    </a>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-pencil-square text-primary"></i>
+          Update Course Program Details
+        </h5>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" novalidate id="editCourseForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="mb-3">
+            <label class="form-label">Degree Course Name <span class="req">*</span></label>
+            <input type="text" class="form-control" name="course_name" value="{{ course.course_name }}" required />
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Course Code <span class="req">*</span></label>
+              <input type="text" class="form-control" name="course_code" value="{{ course.course_code }}" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Department Faculty <span class="req">*</span></label>
+              <select class="form-select" name="department_id" required>
+                {% for d in departments %}
+                <option value="{{ d.id }}" {% if d.id == course.department_id %}selected{% endif %}>{{ d.dept_name }} ({{ d.dept_code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Program Duration</label>
+            <input type="text" class="form-control" name="duration" value="{{ course.duration or '' }}" />
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3">{{ course.description or '' }}</textarea>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4 py-2 d-flex align-items-center gap-2 shadow-sm">
+              <i class="bi bi-check2-circle"></i>
+              <span class="fw-bold">Save Course Changes</span>
+            </button>
+            <a href="{{ url_for('courses.courses') }}" class="btn btn-outline-secondary px-3 py-2">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

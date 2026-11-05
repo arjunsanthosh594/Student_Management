@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Dashboard — EduManage SMS{% endblock %}
+{% block page_title %}Administrative Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<span class="current">Dashboard</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link active">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">System Overview</h1>
+    <div class="ph-sub"><i class="bi bi-calendar3 me-1"></i>Today is {{ today.strftime('%A, %d %B %Y') }} &bull; Real-time MySQL Telemetry</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('admin.add_student') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-person-plus-fill"></i>
+      <span>Add New Student</span>
+    </a>
+    <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-check2-circle"></i>
+      <span>Mark Today's Attendance</span>
+    </a>
+  </div>
+</div>
+
+<!-- Stat Cards Matrix -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon si-blue"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Total Enrolled Students</div>
+        <div class="stat-value">{{ total_students }}</div>
+        <div class="stat-sub text-muted"><i class="bi bi-mortarboard me-1 text-primary"></i>Active academic profiles</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon si-purple"><i class="bi bi-book-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Available Courses</div>
+        <div class="stat-value">{{ total_courses }}</div>
+        <div class="stat-sub text-muted"><i class="bi bi-journal-bookmark me-1 text-purple"></i>Programs across depts</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon si-teal"><i class="bi bi-building"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Total Departments</div>
+        <div class="stat-value">{{ total_departments }}</div>
+        <div class="stat-sub text-muted"><i class="bi bi-diagram-3 me-1 text-teal"></i>Academic faculties</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon si-green"><i class="bi bi-person-check-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Present Today</div>
+        <div class="stat-value text-success">{{ present_today }}</div>
+        <div class="stat-sub text-muted"><i class="bi bi-clock me-1 text-success"></i>Marked present for {{ today.strftime('%d %b') }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon si-red"><i class="bi bi-person-x-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Absent Today</div>
+        <div class="stat-value text-danger">{{ absent_today }}</div>
+        <div class="stat-sub text-muted"><i class="bi bi-exclamation-circle me-1 text-danger"></i>Recorded absences</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon si-orange"><i class="bi bi-pie-chart-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-label">Overall Attendance</div>
+        <div class="stat-value">{{ overall_pct }}%</div>
+        <div class="stat-sub text-muted"><i class="bi bi-graph-up-arrow me-1 text-warning"></i>Cumulative attendance rate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+  <!-- Bar Chart: Enrollment History -->
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-bar-chart-line-fill text-primary"></i>
+          Student Enrolment Trend (Last 6 Months)
+        </h5>
+        <span class="badge-pill bp-blue">Dynamic Trends</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container" style="height: 250px;">
+          <canvas id="enrolment-chart"
+            data-labels='{{ enrolment_data | map(attribute="month") | list | tojson }}'
+            data-values='{{ enrolment_data | map(attribute="count") | list | tojson }}'
+          ></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donut Chart: Today's Attendance -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5 class="card-header-title">
+          <i class="bi bi-pie-chart-fill text-primary"></i>
+          Today's Attendance Ratio
+        </h5>
+        <span class="badge-pill bp-gray">{{ today.strftime('%d %b') }}</span>
+      </div>
+      <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+        {% if (present_today + absent_today) > 0 %}
+          <div class="chart-container" style="position: relative; width: 190px; height: 190px;">
+            <canvas id="attendance-chart"
+              data-present="{{ present_today }}"
+              data-absent="{{ absent_today }}"
+            ></canvas>
+          </div>
+          <div class="d-flex justify-content-around w-100 mt-3 pt-2 border-top">
+            <div class="text-center">
+              <span class="badge-pill bp-present mb-1 d-inline-block">Present: {{ present_today }}</span>
+            </div>
+            <div class="text-center">
+              <span class="badge-pill bp-absent mb-1 d-inline-block">Absent: {{ absent_today }}</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-calendar-x"></i>
+            <p>No attendance has been submitted today yet.</p>
+            <a href="{{ url_for('attendance.index') }}" class="btn btn-sm btn-outline-primary mt-2">
+              <i class="bi bi-clipboard-check me-1"></i>Mark Now
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Student Registrations Table -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-clock-history text-primary"></i>
+      Recently Registered Students
+    </h5>
+    <div class="card-header-actions">
+      <a href="{{ url_for('admin.students') }}" class="btn btn-sm btn-outline-primary">
+        <span>View Full Directory</span>
+        <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+  </div>
+  <div class="card-body-tight">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student Profile</th>
+            <th>Generated ID</th>
+            <th>Degree Program</th>
+            <th>Department</th>
+            <th>Admission Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_students %}
+          <tr>
+            <td>
+              <div class="s-cell">
+                <div class="s-avatar {% if not s.profile_picture %}placeholder{% endif %}">
+                  {% if s.profile_picture %}
+                    <img src="{{ url_for('static', filename=s.profile_picture) }}" alt="{{ s.full_name }}" onerror="this.onerror=null; this.parentElement.innerText='{{ s.full_name[0] }}';">
+                  {% else %}
+                    {{ s.full_name[0] }}
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="s-name">{{ s.full_name }}</div>
+                  <div class="s-email">{{ s.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="id-code">{{ s.student_id }}</span>
+            </td>
+            <td>
+              <span class="text-dark fw-semibold">{{ s.course.course_name }}</span>
+            </td>
+            <td>
+              <span class="badge-pill bp-blue">{{ s.department.dept_name }}</span>
+            </td>
+            <td>
+              <span class="text-muted text-xs">{{ s.admission_date.strftime('%d %b %Y') }}</span>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('admin.view_student', sid=s.id) }}" class="action-btn ab-view" title="View Profile">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('admin.edit_student', sid=s.id) }}" class="action-btn ab-edit" title="Edit Student">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <p>No registered students found in database. Run the seed script or add one.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action Shortcuts -->
+<div class="section-label">Quick Operational Actions</div>
+<div class="row g-2">
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('admin.add_student') }}" class="btn btn-outline-primary w-100 py-2 d-flex flex-column align-items-center gap-1 text-center bg-white shadow-sm">
+      <i class="bi bi-person-plus-fill fs-5"></i>
+      <span class="text-xs">Add Student</span>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('courses.add_course') }}" class="btn btn-outline-primary w-100 py-2 d-flex flex-column align-items-center gap-1 text-center bg-white shadow-sm">
+      <i class="bi bi-book-half fs-5"></i>
+      <span class="text-xs">Add Course</span>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('admin.add_department') }}" class="btn btn-outline-primary w-100 py-2 d-flex flex-column align-items-center gap-1 text-center bg-white shadow-sm">
+      <i class="bi bi-building fs-5"></i>
+      <span class="text-xs">Add Department</span>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-success w-100 py-2 d-flex flex-column align-items-center gap-1 text-center bg-white shadow-sm">
+      <i class="bi bi-calendar-check-fill fs-5"></i>
+      <span class="text-xs">Record Attendance</span>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('attendance.history') }}" class="btn btn-outline-secondary w-100 py-2 d-flex flex-column align-items-center gap-1 text-center bg-white shadow-sm">
+      <i class="bi bi-clock-history fs-5"></i>
+      <span class="text-xs">Attendance History</span>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary w-100 py-2 d-flex flex-column align-items-center gap-1 text-center bg-white shadow-sm">
+      <i class="bi bi-funnel fs-5"></i>
+      <span class="text-xs">Filter Students</span>
+    </a>
+  </div>
+</div>
+{% endblock %}

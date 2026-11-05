@@ -1,0 +1,30 @@
+# ============================================================
+# Systemd Service Definition for Student Management System
+# Place in: /etc/systemd/system/sms.service
+# ============================================================
+
+[Unit]
+Description=Gunicorn instance to serve Student Management System
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/Student-Management-System
+Environment="PATH=/home/ubuntu/Student-Management-System/venv/bin"
+EnvironmentFile=/home/ubuntu/Student-Management-System/.env
+
+# Gunicorn execution command
+ExecStart=/home/ubuntu/Student-Management-System/venv/bin/gunicorn --config /home/ubuntu/Student-Management-System/deploy/gunicorn.conf.py run:app
+
+# Restart policy
+Restart=always
+RestartSec=5s
+
+# Security hardening
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

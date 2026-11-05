@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Record Course Attendance — EduManage SMS{% endblock %}
+{% block page_title %}Attendance Management{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<span class="current">Attendance</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link active">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Mark Daily Attendance</h1>
+    <div class="ph-sub"><i class="bi bi-calendar2-check me-1 text-primary"></i>Select course and academic date to record student presence</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('attendance.history') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 bg-white">
+      <i class="bi bi-clock-history"></i>
+      <span>Attendance Logs & History</span>
+    </a>
+  </div>
+</div>
+
+<!-- Selector Filter Card -->
+<div class="filter-bar mb-3">
+  <form method="GET" action="{{ url_for('attendance.index') }}" class="row g-2 align-items-end">
+    <div class="col-sm-6 col-lg-4">
+      <label class="form-label text-xs">Attendance Date <span class="req">*</span></label>
+      <input type="date" class="form-control form-control-sm" name="att_date" value="{{ att_date_str }}" required />
+    </div>
+    <div class="col-sm-6 col-lg-5">
+      <label class="form-label text-xs">Target Degree Program / Course <span class="req">*</span></label>
+      <select class="form-select form-select-sm" name="course_id" required>
+        <option value="">-- Choose Course --</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if course_id == c.id %}selected{% endif %}>{{ c.course_name }} ({{ c.course_code }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-12 col-lg-3">
+      <button type="submit" class="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1">
+        <i class="bi bi-people-fill"></i>
+        <span>Load Class Students</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if students %}
+<!-- Attendance Marking Card -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-check2-square text-primary"></i>
+      Roll Call: {{ att_date.strftime('%A, %d %B %Y') }}
+    </h5>
+    <div class="card-header-actions">
+      <button type="button" id="mark-all-present" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-check-all me-1"></i>Mark All Present
+      </button>
+      <button type="button" id="mark-all-absent" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-x-lg me-1"></i>Mark All Absent
+      </button>
+    </div>
+  </div>
+  <div class="card-body-tight">
+    <form method="POST" action="{{ url_for('attendance.save_attendance') }}" id="attendanceForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="att_date" value="{{ att_date_str }}" />
+      <input type="hidden" name="course_id" value="{{ course_id }}" />
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Student Profile</th>
+              <th>Student ID</th>
+              <th>Attendance Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+            {% set current_status = existing.get(s.id, 'Present') %}
+            <tr class="{% if current_status == 'Present' %}table-success{% elif current_status == 'Absent' %}table-danger{% endif %}">
+              <td class="text-muted text-xs">{{ loop.index }}</td>
+              <td>
+                <div class="s-cell">
+                  <div class="s-avatar {% if not s.profile_picture %}placeholder{% endif %}">
+                    {% if s.profile_picture %}
+                      <img src="{{ url_for('static', filename=s.profile_picture) }}" alt="{{ s.full_name }}" onerror="this.onerror=null; this.parentElement.innerText='{{ s.full_name[0] }}';">
+                    {% else %}
+                      {{ s.full_name[0] }}
+                    {% endif %}
+                  </div>
+                  <div>
+                    <div class="s-name">{{ s.full_name }}</div>
+                    <div class="s-email">{{ s.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="id-code">{{ s.student_id }}</span></td>
+              <td>
+                <div class="d-flex align-items-center gap-4">
+                  <label class="form-check-label d-flex align-items-center gap-2 cursor-pointer text-success fw-bold">
+                    <input class="form-check-input att-status-radio" type="radio"
+                           name="status_{{ s.id }}" id="present_{{ s.id }}"
+                           value="Present" {% if current_status == 'Present' %}checked{% endif %} />
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Present</span>
+                  </label>
+                  <label class="form-check-label d-flex align-items-center gap-2 cursor-pointer text-danger fw-bold">
+                    <input class="form-check-input att-status-radio" type="radio"
+                           name="status_{{ s.id }}" id="absent_{{ s.id }}"
+                           value="Absent" {% if current_status == 'Absent' %}checked{% endif %} />
+                    <i class="bi bi-x-circle-fill"></i>
+                    <span>Absent</span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-footer-bar">
+        <span class="text-xs text-muted">
+          <i class="bi bi-info-circle me-1"></i>{{ students|length }} enrolled student{{ 's' if students|length != 1 else '' }} in this class
+        </span>
+        <button type="submit" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm px-4">
+          <i class="bi bi-save2-fill"></i>
+          <span class="fw-bold">Save Attendance Record</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% elif course_id %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="bi bi-people text-muted"></i>
+      <p>No students are currently enrolled in this course.</p>
+      <a href="{{ url_for('admin.add_student') }}" class="btn btn-sm btn-outline-primary mt-2">
+        <i class="bi bi-person-plus me-1"></i>Enroll Students to Course
+      </a>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="empty-state py-5">
+      <i class="bi bi-calendar-check text-primary"></i>
+      <p class="fw-semibold text-dark mb-1">Ready to Record Attendance</p>
+      <p class="text-xs text-muted">Select an academic date and course from the filter above to begin taking roll call.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

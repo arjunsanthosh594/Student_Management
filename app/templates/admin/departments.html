@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Academic Departments — EduManage SMS{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-house me-1"></i>Administration</a>
+<span class="sep">/</span>
+<span class="current">Departments</span>
+{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-section-label">Management Modules</div>
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+  <i class="bi bi-speedometer2 nav-icon"></i>
+  <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.students') }}" class="nav-link">
+  <i class="bi bi-people nav-icon"></i>
+  <span>Students</span>
+</a>
+<a href="{{ url_for('courses.courses') }}" class="nav-link">
+  <i class="bi bi-book nav-icon"></i>
+  <span>Courses</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-link active">
+  <i class="bi bi-building nav-icon"></i>
+  <span>Departments</span>
+</a>
+<a href="{{ url_for('attendance.index') }}" class="nav-link">
+  <i class="bi bi-calendar-check nav-icon"></i>
+  <span>Attendance</span>
+</a>
+<a href="{{ url_for('attendance.history') }}" class="nav-link">
+  <i class="bi bi-clock-history nav-icon"></i>
+  <span>Attendance Logs</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-h1">Faculties & Academic Departments</h1>
+    <div class="ph-sub"><i class="bi bi-building me-1 text-primary"></i>Organize academic branches, faculty codes, programs, and student allocations</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ url_for('admin.add_department') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-plus-circle-fill"></i>
+      <span>Add Department</span>
+    </a>
+  </div>
+</div>
+
+<!-- Departments Table Card -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-header">
+    <h5 class="card-header-title">
+      <i class="bi bi-building-fill text-primary"></i>
+      Registered Academic Departments
+    </h5>
+    <span class="badge-pill bp-blue">{{ departments|length }} Department{{ 's' if departments|length != 1 else '' }}</span>
+  </div>
+  <div class="card-body-tight">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 45px;">#</th>
+            <th>Department Name</th>
+            <th>Department Code</th>
+            <th>Active Courses</th>
+            <th>Total Students</th>
+            <th>Description</th>
+            <th class="text-end" style="width: 100px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in departments %}
+          <tr>
+            <td class="text-muted text-xs">{{ loop.index }}</td>
+            <td>
+              <div class="fw-bold text-dark">{{ d.dept_name }}</div>
+            </td>
+            <td><span class="badge-pill bp-blue">{{ d.dept_code }}</span></td>
+            <td>
+              <span class="badge-pill bp-gray">{{ d.course_count }} Course{{ 's' if d.course_count != 1 else '' }}</span>
+            </td>
+            <td>
+              <span class="badge-pill bp-green">{{ d.student_count }} Student{{ 's' if d.student_count != 1 else '' }}</span>
+            </td>
+            <td class="text-muted text-xs" style="max-width: 250px;">
+              {{ d.description or 'No faculty description logged.' }}
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{{ url_for('admin.edit_department', did=d.id) }}" class="action-btn ab-edit" title="Edit Department Details">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="POST" action="{{ url_for('admin.delete_department', did=d.id) }}" class="confirm-delete d-inline" data-name="{{ d.dept_name }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="action-btn ab-delete" title="Delete Department" {% if d.student_count > 0 or d.course_count > 0 %}disabled title="Cannot delete: Active courses or students exist"{% endif %}>
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="bi bi-building"></i>
+                <p>No departments registered yet.</p>
+                <a href="{{ url_for('admin.add_department') }}" class="btn btn-sm btn-outline-primary mt-2">Create First Department</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
