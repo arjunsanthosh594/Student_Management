@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Student Management System — Comprehensive Academic Documentation
 
 A modern full-stack web application built using **Python 3**, **Flask**, **MySQL**, **Bootstrap 5**, and **AWS Cloud Services** (EC2, RDS, and S3).
@@ -292,3 +293,6 @@ To run tests:
 ```bash
 python -m unittest tests/test_sms.py
 ```
+=======
+# Student_Management
+>>>>>>> 68c611404b91d44f5d7712ca54391182e9a7d9b0
