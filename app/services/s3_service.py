@@ -53,7 +53,7 @@ class S3Service:
                 file_obj,
                 self._get_bucket(),
                 object_key,
-                ExtraArgs={"ContentType": content_type, "ACL": "private"},
+                ExtraArgs={"ContentType": content_type},
             )
             return True
         except botocore.exceptions.ClientError as e:

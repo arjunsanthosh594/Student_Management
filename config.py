@@ -81,7 +81,7 @@ class ProductionConfig(Config):
     """Production — uses Amazon RDS, debug off, secure cookies."""
     DEBUG: bool = False
     TESTING: bool = False
-    SESSION_COOKIE_SECURE: bool = True
+    SESSION_COOKIE_SECURE: bool = False
 
     # Override DB settings with RDS values when present
     DB_HOST: str = os.environ.get("RDS_HOST", os.environ.get("DB_HOST", "localhost"))

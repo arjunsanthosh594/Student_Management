@@ -63,3 +63,12 @@ node_modules/
 *.pid
 gunicorn.conf.py
 nginx.conf
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc

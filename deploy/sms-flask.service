@@ -1,0 +1,25 @@
+[Unit]
+Description=Student Management System - Flask
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+
+WorkingDirectory=/home/ubuntu/Student_Management
+
+Environment="PATH=/home/ubuntu/Student_Management/venv/bin"
+Environment="FLASK_ENV=production"
+
+EnvironmentFile=/home/ubuntu/Student_Management/.env
+
+ExecStart=/home/ubuntu/Student_Management/venv/bin/python /home/ubuntu/Student_Management/run.py
+
+Restart=always
+RestartSec=5
+
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

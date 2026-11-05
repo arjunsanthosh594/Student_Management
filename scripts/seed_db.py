@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from datetime import date, timedelta
 import random
+import getpass
 from app import create_app
 from app.extensions import db
 from app.models.admin import Admin
@@ -29,11 +30,24 @@ with app.app_context():
             email="admin@sms.edu",
             full_name="System Administrator",
         )
-        admin.set_password("Admin@1234")  # Change after first login!
+
+        admin_password = getpass.getpass(
+            "Enter a strong initial admin password (minimum 12 characters): "
+        )
+
+        if len(admin_password) < 12:
+            raise ValueError("Admin password must contain at least 12 characters.")
+
+        admin.set_password(admin_password)
         db.session.add(admin)
-        print("[OK] Admin account created  username=admin  password=Admin@1234")
+        print("[OK] Admin account created. Password not displayed.")
     else:
         print("[--] Admin account already exists.")
+
+    # ------------------------------------------------------------------
+    # Departments
+    # ------------------------------------------------------------------
+
 
     # ------------------------------------------------------------------
     # Departments
@@ -94,13 +108,20 @@ with app.app_context():
         ("Henry Davis", "henry@student.edu", "Male", "EC101"),
     ]
 
+    student_password = getpass.getpass(
+        "Enter a temporary password for all sample student accounts (minimum 12 characters): "
+    )
+
+    if len(student_password) < 12:
+        raise ValueError("Student password must contain at least 12 characters.")
+
     for full_name, email, gender, course_code in sample_students:
+
         if Student.query.filter_by(email=email).first():
             print(f"[--] Student already exists: {full_name}")
             continue
 
         course = courses[course_code]
-        dept_map = {v.id: v for v in depts.values()}
         dept = Department.query.get(course.department_id)
 
         student = Student(
@@ -117,24 +138,32 @@ with app.app_context():
         db.session.add(student)
         db.session.flush()
 
-        # Create login account (default password = student_id)
+        # Create student login account
         su = StudentUser(student_id=student.id, username=student.student_id)
-        su.set_password("Student@123")
+        su.set_password(student_password)
         db.session.add(su)
         db.session.flush()
 
-        print(f"[OK] Student: {full_name}  login: {student.student_id}  password: Student@123")
+        print(f"[OK] Student: {full_name}  login: {student.student_id}  password set")
 
         # Generate sample attendance (last 30 days)
         for days_ago in range(30, 0, -1):
             att_date = date.today() - timedelta(days=days_ago)
-            if att_date.weekday() >= 5:  # skip weekends
+            if att_date.weekday() >= 5:
                 continue
             status = "Present" if random.random() > 0.2 else "Absent"
-            att = Attendance(student_id=student.id, attendance_date=att_date, status=status)
+            att = Attendance(
+                student_id=student.id,
+                attendance_date=att_date,
+                status=status,
+            )
             db.session.add(att)
 
     db.session.commit()
     print("\n[DONE] Database seeded successfully.")
-    print("       Admin login → username: admin | password: Admin@1234")
-    print("       Student login → username: <student_id> | password: Student@123")
+    print("Admin login → username: admin")
+    print("Student login → username: <student_id>")
+    print("Use the passwords entered during seeding.")
+print("       Admin login → username: admin")
+print("       Student login → username: <student_id>")
+print("       Use the passwords entered during seeding.")

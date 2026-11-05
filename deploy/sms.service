@@ -4,26 +4,28 @@
 # ============================================================
 
 [Unit]
-Description=Gunicorn instance to serve Student Management System
+Description=Student Management System - Gunicorn
 After=network.target
 
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/home/ubuntu/Student-Management-System
-Environment="PATH=/home/ubuntu/Student-Management-System/venv/bin"
-EnvironmentFile=/home/ubuntu/Student-Management-System/.env
 
-# Gunicorn execution command
-ExecStart=/home/ubuntu/Student-Management-System/venv/bin/gunicorn --config /home/ubuntu/Student-Management-System/deploy/gunicorn.conf.py run:app
+WorkingDirectory=/home/ubuntu/Student_Management
 
-# Restart policy
+Environment="PATH=/home/ubuntu/Student_Management/venv/bin"
+Environment="FLASK_ENV=production"
+
+EnvironmentFile=/home/ubuntu/Student_Management/.env
+
+ExecStart=/home/ubuntu/Student_Management/venv/bin/gunicorn \
+    --config /home/ubuntu/Student_Management/deploy/gunicorn.conf.py \
+    run:app
+
 Restart=always
-RestartSec=5s
+RestartSec=5
 
-# Security hardening
 PrivateTmp=true
-ProtectSystem=full
 NoNewPrivileges=true
 
 [Install]
