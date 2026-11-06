@@ -10,7 +10,7 @@ from sqlalchemy import func
 from werkzeug.utils import secure_filename
 import os
 import uuid
-
+from urllib.parse import urlparse, unquote
 from app.extensions import db
 from app.models.admin import Admin
 from app.models.student import Student
@@ -21,6 +21,40 @@ from app.models.attendance import Attendance
 from app.services.s3_service import S3Service
 
 admin_bp = Blueprint("admin", __name__)
+
+
+def get_s3_object_key(image_url):
+    """Extract and validate an S3 object key from an S3 URI or HTTPS URL."""
+    if not image_url:
+        return None
+
+    bucket = current_app.config.get("S3_BUCKET_NAME", "")
+    if not bucket:
+        return None
+
+    parsed = urlparse(image_url.strip())
+
+    if parsed.scheme == "s3":
+        if parsed.netloc != bucket:
+            return None
+        key = unquote(parsed.path.lstrip("/"))
+    elif parsed.scheme == "https":
+        host = (parsed.hostname or "").lower()
+        valid_host = (
+            host == f"{bucket}.s3.amazonaws.com"
+            or host.startswith(f"{bucket}.s3.")
+            or host.startswith(f"{bucket}.s3-")
+        )
+        if not valid_host:
+            return None
+        key = unquote(parsed.path.lstrip("/"))
+    else:
+        return None
+
+    if not key or ".." in key.split("/"):
+        return None
+
+    return key
 
 
 # ------------------------------------------------------------------
@@ -176,7 +210,7 @@ def add_student():
         admission_str = request.form.get("admission_date", "")
         password = request.form.get("password", "")
 
-        # Validation
+        # Validate required fields.
         errors = []
         if not full_name:
             errors.append("Full name is required.")
@@ -194,33 +228,73 @@ def add_student():
             errors.append("Password must be at least 6 characters.")
 
         if errors:
-            for e in errors:
-                flash(e, "danger")
-            return render_template("admin/add_student.html", departments=departments, courses=courses)
+            for error in errors:
+                flash(error, "danger")
+            return render_template(
+                "admin/add_student.html",
+                departments=departments,
+                courses=courses
+            )
 
-        # Parse dates
+        # Parse optional dates.
         dob = datetime.strptime(dob_str, "%Y-%m-%d").date() if dob_str else None
-        admission_date = datetime.strptime(admission_str, "%Y-%m-%d").date() if admission_str else date.today()
+        admission_date = (
+            datetime.strptime(admission_str, "%Y-%m-%d").date()
+            if admission_str else None
+        )
 
-        # Handle profile picture
+        # Handle profile picture: accept an S3 URL or an uploaded file.
         picture_path = None
         picture_source = "local"
+        image_url = request.form.get("profile_picture_url", "").strip()
         file = request.files.get("profile_picture")
         s3 = S3Service()
 
-        if file and file.filename and allowed_file(file.filename):
+        if image_url:
+            key = get_s3_object_key(image_url)
+            if not key:
+                flash("Invalid S3 image URL. Please check the bucket URL.", "danger")
+                return render_template(
+                    "admin/add_student.html",
+                    departments=departments,
+                    courses=courses
+                )
+            if not s3.is_configured():
+                flash("S3 is not configured.", "danger")
+                return render_template(
+                    "admin/add_student.html",
+                    departments=departments,
+                    courses=courses
+                )
+            picture_path = key
+            picture_source = "s3"
+
+        elif file and file.filename and allowed_file(file.filename):
             filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+
             if s3.is_configured():
-                key = f"profiles/{filename}"
-                s3.upload_file(file, key)
-                picture_path = key
-                picture_source = "s3"
+                # Keep uploads under students/* to match the EC2 IAM policy.
+                key = f"students/{filename}"
+                if s3.upload_file(file, key):
+                    picture_path = key
+                    picture_source = "s3"
+                else:
+                    flash("Unable to upload profile image to S3.", "danger")
+                    return render_template(
+                        "admin/add_student.html",
+                        departments=departments,
+                        courses=courses
+                    )
             else:
-                upload_dir = os.path.join(current_app.root_path, "static", "images", "uploads")
+                upload_dir = os.path.join(
+                    current_app.root_path, "static", "images", "uploads"
+                )
+                os.makedirs(upload_dir, exist_ok=True)
                 file.save(os.path.join(upload_dir, filename))
                 picture_path = f"images/uploads/{filename}"
                 picture_source = "local"
 
+        # Save student and corresponding login account together.
         student = Student(
             full_name=full_name,
             email=email,
@@ -234,19 +308,40 @@ def add_student():
             profile_picture=picture_path,
             picture_source=picture_source,
         )
-        db.session.add(student)
-        db.session.flush()  # get student.id
 
-        # Create login account
-        student_user = StudentUser(student_id=student.id, username=student.student_id)
-        student_user.set_password(password)
-        db.session.add(student_user)
+        try:
+            db.session.add(student)
+            db.session.flush()
 
-        db.session.commit()
-        flash(f"Student '{full_name}' added successfully! Login: {student.student_id}", "success")
+            student_user = StudentUser(
+                student_id=student.id,
+                username=student.student_id
+            )
+            student_user.set_password(password)
+            db.session.add(student_user)
+
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unable to add student")
+            flash("Unable to add student. Check the application log.", "danger")
+            return render_template(
+                "admin/add_student.html",
+                departments=departments,
+                courses=courses
+            )
+
+        flash(
+            f"Student '{full_name}' added successfully! Login: {student.student_id}",
+            "success"
+        )
         return redirect(url_for("admin.students"))
 
-    return render_template("admin/add_student.html", departments=departments, courses=courses)
+    return render_template(
+        "admin/add_student.html",
+        departments=departments,
+        courses=courses
+    )
 
 
 # ------------------------------------------------------------------
@@ -304,7 +399,7 @@ def edit_student(sid):
                 # Delete old S3 object if exists
                 if student.profile_picture and student.picture_source == "s3":
                     s3.delete_file(student.profile_picture)
-                key = f"profiles/{filename}"
+                key = f"students/{filename}"
                 s3.upload_file(file, key)
                 student.profile_picture = key
                 student.picture_source = "s3"
