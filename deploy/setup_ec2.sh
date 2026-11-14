@@ -26,13 +26,13 @@ chmod -R 775 /var/log/sms
 
 # 3. Setup systemd unit
 echo "[3/6] Setting up systemd service..."
-cp /home/ubuntu/Student-Management-System/deploy/sms.service /etc/systemd/system/sms.service
+cp /home/ubuntu/Student-Management/deploy/sms.service /etc/systemd/system/sms.service
 systemctl daemon-reload
 
 # 4. Setup Nginx reverse proxy
 echo "[4/6] Configuring Nginx..."
 rm -f /etc/nginx/sites-enabled/default
-cp /home/ubuntu/Student-Management-System/deploy/nginx.conf /etc/nginx/sites-available/sms
+cp /home/ubuntu/Student-Management/deploy/nginx.conf /etc/nginx/sites-available/sms
 ln -sf /etc/nginx/sites-available/sms /etc/nginx/sites-enabled/sms
 nginx -t
 systemctl restart nginx
