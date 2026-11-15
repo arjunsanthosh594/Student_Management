@@ -18,7 +18,7 @@ from app.models.student import Student
 from app.models.student_user import StudentUser
 from app.models.attendance import Attendance
 
-app = create_app()
+app = create_app("production")
 
 with app.app_context():
     # ------------------------------------------------------------------

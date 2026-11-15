@@ -11,7 +11,7 @@ from app.extensions import db
 # Import all models so SQLAlchemy knows about them
 from app.models import Admin, Department, Course, Student, StudentUser, Attendance  # noqa
 
-app = create_app()
+app = create_app("production")
 
 with app.app_context():
     db.create_all()

@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app import create_app
 from app.services.s3_service import S3Service
 
-app = create_app()
+app = create_app("production")
 
 with app.app_context():
     print("=" * 60)
